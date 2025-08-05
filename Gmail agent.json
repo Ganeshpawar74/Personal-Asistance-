@@ -1,0 +1,202 @@
+{
+  "name": "Gmail agent",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f1eadf0b-bdde-49f1-b35d-695a241ff2ca",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query }}",
+        "options": {
+          "systemMessage": "You are an AI email assistant integrated with Gmail. You automatically take intelligent actions based on the content and context of each email.\n\n#Primary Task\nFor all replies, drafts, or new emails composed:\n\nEnsure every email is professionally signed off as “The Professor”.\n\nNever use placeholder names like {{name}}, {{signature}}, or similar.\n\nAlways insert “The Professor” at the end of the message in a natural and respectful way (e.g., Regards, The Professor or Sincerely, The Professor).\n\n#Examples\n\n\"Looking forward to your response.\nBest,\nThe Professor\"\n\n\"Let me know if you need further clarification.\nWarm regards,\nThe Professor\"\n\n#Rules\n\nDo not leave any email unsigned.\n\nDo not add quotes, emojis, or branding unless specifically instructed.\n\nNever abbreviate or change the signature text (e.g., don't use \"Prof.\" or initials).\n\n#Trigger Condition\nApply to:\n✅ All replies\n✅ All new emails\n✅ All forwarded emails (if body is edited)"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "5c55d268-8d29-4882-b52f-b02eb600787c",
+      "name": "Email Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        64,
+        208
+      ],
+      "id": "1f0857a5-b03e-473b-a342-8d2511169996",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "h9eilgSvfqYdjrKS",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $fromAI(\"emailAddress\", \"the email address we are sending to\") }}",
+        "subject": "={{ $fromAI(\"subject\") }}",
+        "emailType": "text",
+        "message": "={{ $fromAI(\"emailBody\") }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "The Professor"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        320,
+        256
+      ],
+      "id": "89e73489-0e4a-4f80-8468-316bb9f8f7df",
+      "name": "Send Email",
+      "webhookId": "11b29d52-b302-495e-b952-0abb6e4737ef",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gZS2UcqODmBX7HDO",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": "={{ $fromAi(\"limit\") }}",
+        "filters": {
+          "sender": "={{ $fromAi(\"senderEmail\") }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        448,
+        304
+      ],
+      "id": "6e15ce39-4ccf-4ab5-a46d-e46fa47ed370",
+      "name": "Get Messages",
+      "webhookId": "d93b17b5-cd04-4f4f-8a3a-429085f631be",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gZS2UcqODmBX7HDO",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6becea98-01a1-4def-b4cd-6891693694a5",
+              "name": "response",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        0
+      ],
+      "id": "bf156fad-6b54-47a3-8704-4b96267d3bb5",
+      "name": "Response"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Email Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Agent": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "ai_tool": [
+        [
+          {
+            "node": "Email Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Messages": {
+      "ai_tool": [
+        [
+          {
+            "node": "Email Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a182c83d-719d-44d9-a410-99993ff05503",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4171f51daf81a6af5b99b15453ed6f4faeb615797921ab8ecd50cec537d18a9b"
+  },
+  "id": "ZX137d3gmwLLORib",
+  "tags": []
+}

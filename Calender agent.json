@@ -1,0 +1,284 @@
+{
+  "name": "Calender agent",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -144,
+        -80
+      ],
+      "id": "2d7f60e4-170e-4722-9fff-bfa2b61888af",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query }}",
+        "options": {
+          "systemMessage": "=You are a calendar assistant. You have access to multiple tools to take any action within calendar. Here is the current date/time: {{ $now }}\n\nCreate Event:\n\nIf an end date isn't specified for the event, assume it will be 60 minutes long. Use this tool if there is no attendee specified.\n\nCreate Event with Attendee:\n\nIf an end date isn't specified for the event, assume it will be 60 minutes long. Use this tool WHEN AN ATTENDEE IS SPECIFIED.\n\nGet Events:\n\nUse this tool to get events from a certain day and summarize them.\n\n### Response Format Example\n\nWhen confirming an event creation, format the response like this:\n\nThe meeting with Michael Scott has been successfully scheduled. Here are the details:\n\n    🗓️ Event: Project Discussion\n    📅 Date: November 29, 2024\n    ⏰ Time: 6:00 PM to 8:00 PM (MDT)\n    👤 Participant: Michael Scott (uppitdigital@gmail.com)\n\nIf you have any changes or need further assistance, just let me know!"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        64,
+        -80
+      ],
+      "id": "52cff7b6-4f0c-4e4a-81ae-dd39601ab9d9",
+      "name": "Calender agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        128
+      ],
+      "id": "ab1ca136-07b7-401b-b8ff-d2241c7cdf5f",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "h9eilgSvfqYdjrKS",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "ganeshppawar864@gmail.com",
+          "mode": "list",
+          "cachedResultName": "ganeshppawar864@gmail.com"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $fromAI(\"oneDayBefore\",\"one day before the date the user requested\")}}",
+        "timeMax": "={{ $fromAI(\"oneDayAfter\",\"one day After the date the user requested\")}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        256,
+        160
+      ],
+      "id": "5acc2c00-ee2b-4bf4-af3e-9ee757b5c0fc",
+      "name": "Get Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "BNj5Q5WmVxRYAUgx",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3ede1e66-a534-4112-a8b4-6be36cdf1a1a",
+              "name": "response",
+              "value": "={{ $json.output}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        -80
+      ],
+      "id": "acb84338-d6a4-43c9-8dc1-71f4b92a633a",
+      "name": "Response"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "ganeshppawar864@gmail.com",
+          "mode": "list",
+          "cachedResultName": "ganeshppawar864@gmail.com"
+        },
+        "start": "={{ $fromAI(\"startTime\") }}",
+        "end": "={{ $fromAI(\"endTime\") }}",
+        "additionalFields": {
+          "summary": "={{ $fromAI(\"eventTitle\") }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        112,
+        176
+      ],
+      "id": "2d9cadf0-0070-4659-8aec-55961ba6ef5b",
+      "name": "Create event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "BNj5Q5WmVxRYAUgx",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "ganeshppawar864@gmail.com",
+          "mode": "list",
+          "cachedResultName": "ganeshppawar864@gmail.com"
+        },
+        "start": "={{ $fromAI(\"startTime\") }}",
+        "end": "={{ $fromAI(\"endTime\") }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ $fromAI(\"attendee\") }}"
+          ],
+          "summary": "={{ $fromAI(\"eventTitle\") }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        400,
+        160
+      ],
+      "id": "ee3a038e-8709-4da0-8e61-979defe27565",
+      "name": "Create Event with Attendee",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "BNj5Q5WmVxRYAUgx",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.googleTasksTool",
+      "typeVersion": 1,
+      "position": [
+        368,
+        272
+      ],
+      "id": "afde2de5-21e0-445a-8fad-1c9c35fbed9e",
+      "name": "Create a task in Google Tasks"
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "query": "set up calender event for 5 pm for dinner"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Calender agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Calender agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calender agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calender agent": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create event": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calender agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Event with Attendee": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calender agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a task in Google Tasks": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calender agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3fd86b28-6368-45d9-8a85-908794adcef9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4171f51daf81a6af5b99b15453ed6f4faeb615797921ab8ecd50cec537d18a9b"
+  },
+  "id": "0b7QkwMbzd8jLKC6",
+  "tags": []
+}

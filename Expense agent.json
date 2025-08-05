@@ -1,0 +1,303 @@
+{
+  "name": "Expense agent",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "02e45c53-490a-4298-8d17-37cf6d6ec56a",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query }}",
+        "options": {
+          "systemMessage": "=System Summary for Expense Tracker Agent\n\nYou are an intelligent Expense Tracker Agent that helps users manage their daily spending.\nYou can add new expenses, update existing records, and retrieve summaries of expenses on request.\n\n### Tool used\n\n1. Add Expense\nWhen a user sends a message like “Spent ₹250 on groceries”, extract:\n\n- amount\n-category\n-description\n\ndate (default to today if not specified)\nSave the data to the connected Google Sheet or Airtable.\n\n2. Update Expense\nWhen the user provides details like “Change ₹250 to ₹300 for groceries on July 2”, locate the matching entry and update the relevant fields.\n\n3. Retrieve Summary\nhen the user asks a question like “How much did I spend on food this week?”:\n\n-Identify category: food\n\n-Time range: this week\n\n-Query the database\n\n-Calculate the total amount\n\n-Return a summarized response\n\n✅ Response Format Examples\n\nFor Adding:\n\n ✅ Your ₹500 expense for groceries on 2025-08-04 has been saved.\n\nFor Updating:\n\n  🔁 Updated your expense to ₹300 for groceries on July 2.\n\nFor Summary:\n\n  📊 You spent ₹1,250 on travel in the last 30 days.\n\n🧠 Reminder\n\n-If a date is missing, assume today’s date.\n\n-If category is unclear, try to infer it from context.\n\n-Respond in a helpful, friendly tone and confirm each action clearly."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "eb254c44-a3bc-4cb9-9f7d-b6c5f05504ac",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3ede1e66-a534-4112-a8b4-6be36cdf1a1a",
+              "name": "response",
+              "value": "={{ $json.output}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        576,
+        0
+      ],
+      "id": "03322495-a9c9-46b3-9a3a-2819dce75ac9",
+      "name": "Response"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        80,
+        208
+      ],
+      "id": "c3589834-f83d-4a1c-9574-2e7e92be7ecb",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "h9eilgSvfqYdjrKS",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "17g-BH-q2qpASEoS2HQ74GBwLw7G5ZwLP1omuMTi-orE",
+          "mode": "list",
+          "cachedResultName": "Expense Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17g-BH-q2qpASEoS2HQ74GBwLw7G5ZwLP1omuMTi-orE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1600420961,
+          "mode": "list",
+          "cachedResultName": "Sheet2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17g-BH-q2qpASEoS2HQ74GBwLw7G5ZwLP1omuMTi-orE/edit#gid=1600420961"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Amount",
+              "displayName": "Amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.6,
+      "position": [
+        336,
+        224
+      ],
+      "id": "9e6ed795-cd8c-4372-a949-4b8b6eb11550",
+      "name": "Update expense",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "8c1nXTI7IuGB0tUS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "17g-BH-q2qpASEoS2HQ74GBwLw7G5ZwLP1omuMTi-orE",
+          "mode": "list",
+          "cachedResultName": "My Database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17g-BH-q2qpASEoS2HQ74GBwLw7G5ZwLP1omuMTi-orE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1600420961,
+          "mode": "list",
+          "cachedResultName": "Sheet2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17g-BH-q2qpASEoS2HQ74GBwLw7G5ZwLP1omuMTi-orE/edit#gid=1600420961"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.6,
+      "position": [
+        480,
+        240
+      ],
+      "id": "3a224e4f-6d39-4c6d-84db-c63b6170489a",
+      "name": "Get Expense",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "8c1nXTI7IuGB0tUS",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.googleTasksTool",
+      "typeVersion": 1,
+      "position": [
+        640,
+        240
+      ],
+      "id": "48621647-d3e1-460c-a1ca-01a32f12037f",
+      "name": "Create Task",
+      "credentials": {
+        "googleTasksOAuth2Api": {
+          "id": "YXPSwL0MAaoC474H",
+          "name": "Google Tasks account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "query": "Spent ₹250 on Mobile Shop for repair mobile"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update expense": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Expense": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Task": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4eaf4856-fba5-47db-aef2-03ef15f05a2e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4171f51daf81a6af5b99b15453ed6f4faeb615797921ab8ecd50cec537d18a9b"
+  },
+  "id": "nO8zt25nwTbErSKK",
+  "tags": []
+}
